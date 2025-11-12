@@ -1,0 +1,47 @@
+* {
+    padding: 0;
+    max-width: 0;
+    box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #111;
+  color: #fff;
+}
+
+#scoreBoard {
+  font-size: 24px;
+  margin: 10px 0;
+}
+
+#gameArea {
+  position: relative;
+  width: 90vw;
+  max-width: 400px;
+  height: 80vh;
+  border: 2px solid #fff;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #000, #333);
+}
+
+#player {
+  position: absolute;
+  bottom: 10px;
+  width: 50px;
+  height: 20px;
+  background-color: #0f0;
+  border-radius: 5px;
+}
+
+.falling-object {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #f00;
+  border-radius: 50%;
+}
