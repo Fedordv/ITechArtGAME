@@ -44,6 +44,8 @@ export const gameManager = {
         gameState.objectSpeed = CONFIG.initialObjectSpeed;
         gameState.lastSpawnTime = 0;
         gameState.lastFrameTime = 0;
+        gameState.pauseStartTime = 0;
+        gameState.totalPauseDuration = 0;
         
         elements.score.textContent = '0';
         elements.level.textContent = '1';
@@ -63,11 +65,22 @@ export const gameManager = {
         gameState.isPaused = !gameState.isPaused;
         elements.pauseButton.textContent = gameState.isPaused ? 'Resume' : 'Pause';
         
-        if (!gameState.isPaused) {
+        if (gameState.isPaused) {
+            gameState.pauseStartTime = performance.now();
+            if (gameState.animationId) {
+                cancelAnimationFrame(gameState.animationId);
+                gameState.animationId = null;
+            }
+        } else {
+            const pauseEndTime = performance.now();
+            const pauseDuration = pauseEndTime - gameState.pauseStartTime;
+            gameState.totalPauseDuration += pauseDuration;
+            
+            objectManager.resetObjectTimestamps(pauseDuration);
+            
+            gameState.lastSpawnTime += pauseDuration;
+            
             this.gameLoop();
-        } else if (gameState.animationId) {
-            cancelAnimationFrame(gameState.animationId);
-            gameState.animationId = null;
         }
     },
     
@@ -78,7 +91,7 @@ export const gameManager = {
             gameState.animationId = null;
         }
         
-        if (gameState.score > gameState.highScore && gameState.score < 1000000) { // Reasonable upper limit
+        if (gameState.score > gameState.highScore && gameState.score < 1000000) {
             gameState.highScore = gameState.score;
             localStorage.setItem('fallingObjectsHighScore', gameState.highScore.toString());
             elements.highScore.textContent = gameState.highScore;
@@ -95,21 +108,23 @@ export const gameManager = {
     gameLoop(currentTime) {
         if (!gameState.isPlaying || gameState.isPaused) return;
         
-        const deltaTime = gameState.lastFrameTime ? currentTime - gameState.lastFrameTime : 16; // ~60fps
-        gameState.lastFrameTime = currentTime;
+        const adjustedTime = currentTime - gameState.totalPauseDuration;
+        
+        const deltaTime = gameState.lastFrameTime ? adjustedTime - gameState.lastFrameTime : 16;
+        gameState.lastFrameTime = adjustedTime;
         
         if (!gameState.lastSpawnTime) {
-            gameState.lastSpawnTime = currentTime;
+            gameState.lastSpawnTime = adjustedTime;
         }
         
         playerMovement.update();
         
         const shouldEndGame = objectManager.updateObjects(deltaTime);
         
-        if (currentTime - gameState.lastSpawnTime > CONFIG.spawnInterval && 
+        if (adjustedTime - gameState.lastSpawnTime > CONFIG.spawnInterval && 
             gameState.objects.length < CONFIG.maxObjectsOnScreen) {
             objectManager.spawnObject();
-            gameState.lastSpawnTime = currentTime;
+            gameState.lastSpawnTime = adjustedTime;
         }
         
         if (shouldEndGame) {

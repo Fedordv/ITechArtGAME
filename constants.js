@@ -40,5 +40,7 @@ export const gameState = {
     objects: [],
     lastSpawnTime: 0,
     objectSpeed: CONFIG.initialObjectSpeed,
-    lastFrameTime: 0
+    lastFrameTime: 0,
+    pauseStartTime: 0,
+    totalPauseDuration: 0  
 };

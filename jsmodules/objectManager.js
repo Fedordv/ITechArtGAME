@@ -36,7 +36,7 @@ export const objectManager = {
             left: startLeft,
             width: size,
             height: size,
-            lastUpdateTime: performance.now()
+            lastUpdateTime: performance.now() - gameState.totalPauseDuration
         });
     },
     
@@ -44,17 +44,16 @@ export const objectManager = {
         if (!gameState.isPlaying || gameState.isPaused) return false;
         
         let gameOver = false;
-        const currentTime = performance.now();
+        const currentAdjustedTime = performance.now() - gameState.totalPauseDuration;
         
         for (let i = gameState.objects.length - 1; i >= 0; i--) {
             const obj = gameState.objects[i];
             
-            const timeDiff = currentTime - obj.lastUpdateTime;
-            const movement = (obj.speed * timeDiff) / 16; 
+            const movement = (obj.speed * deltaTime) / 16; // Normalize to 60fps
             
             obj.top += movement;
             obj.element.style.top = `${obj.top}px`;
-            obj.lastUpdateTime = currentTime;
+            obj.lastUpdateTime = currentAdjustedTime;
             
             if (this.checkCollision(obj)) {
                 this.collectObject(i);
@@ -69,6 +68,13 @@ export const objectManager = {
         }
         
         return gameOver;
+    },
+    
+    resetObjectTimestamps(pauseDuration) {
+        const currentTime = performance.now();
+        gameState.objects.forEach(obj => {
+            obj.lastUpdateTime = currentTime - pauseDuration;
+        });
     },
     
     checkCollision(obj) {
