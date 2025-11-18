@@ -39,8 +39,5 @@ export const gameState = {
     animationId: null,
     objects: [],
     lastSpawnTime: 0,
-    objectSpeed: CONFIG.initialObjectSpeed,
-    lastFrameTime: 0,
-    pauseStartTime: 0,
-    totalPauseDuration: 0  
+    objectSpeed: CONFIG.initialObjectSpeed
 };

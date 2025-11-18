@@ -1,10 +1,14 @@
 import { elements, gameState, CONFIG } from '../constants.js';
 
+// Object Management
 export const objectManager = {
     colors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'],
     
     spawnObject() {
-        if (gameState.objects.length >= CONFIG.maxObjectsOnScreen) return;
+        // Limit maximum objects on screen
+        if (gameState.objects.length >= CONFIG.maxObjectsOnScreen) {
+            return;
+        }
         
         const object = document.createElement('div');
         object.className = 'falling-object';
@@ -35,32 +39,35 @@ export const objectManager = {
             top: -size,
             left: startLeft,
             width: size,
-            height: size,
-            lastUpdateTime: performance.now() - gameState.totalPauseDuration
+            height: size
         });
+        
+        console.log(`Spawned object, total: ${gameState.objects.length}`);
     },
     
-    updateObjects(deltaTime) {
-        if (!gameState.isPlaying || gameState.isPaused) return false;
+    updateObjects() {
+        if (!gameState.isPlaying || gameState.isPaused) {
+            return false;
+        }
         
         let gameOver = false;
-        const currentAdjustedTime = performance.now() - gameState.totalPauseDuration;
         
         for (let i = gameState.objects.length - 1; i >= 0; i--) {
             const obj = gameState.objects[i];
             
-            const movement = (obj.speed * deltaTime) / 16; // Normalize to 60fps
-            
-            obj.top += movement;
+            // Update object position
+            obj.top += obj.speed;
             obj.element.style.top = `${obj.top}px`;
-            obj.lastUpdateTime = currentAdjustedTime;
             
+            // Check collision
             if (this.checkCollision(obj)) {
                 this.collectObject(i);
                 continue;
             }
             
+            // Check if object is out of bounds
             if (obj.top > elements.gameArea.offsetHeight) {
+                console.log("Object missed - game over");
                 this.removeObject(i);
                 gameOver = true;
                 break;
@@ -70,60 +77,42 @@ export const objectManager = {
         return gameOver;
     },
     
-    resetObjectTimestamps(pauseDuration) {
-        const currentTime = performance.now();
-        gameState.objects.forEach(obj => {
-            obj.lastUpdateTime = currentTime - pauseDuration;
-        });
-    },
-    
     checkCollision(obj) {
         const playerRect = elements.player.getBoundingClientRect();
         const objRect = obj.element.getBoundingClientRect();
-        const gameAreaRect = elements.gameArea.getBoundingClientRect();
         
-        const relativePlayerRect = {
-            left: playerRect.left - gameAreaRect.left,
-            right: playerRect.right - gameAreaRect.left,
-            top: playerRect.top - gameAreaRect.top,
-            bottom: playerRect.bottom - gameAreaRect.top
-        };
-        
-        const relativeObjRect = {
-            left: objRect.left - gameAreaRect.left,
-            right: objRect.right - gameAreaRect.left,
-            top: objRect.top - gameAreaRect.top,
-            bottom: objRect.bottom - gameAreaRect.top
-        };
-        
+        // Simple and reliable collision detection
         const collision = 
-            relativePlayerRect.left < relativeObjRect.right - 2 &&
-            relativePlayerRect.right > relativeObjRect.left + 2 &&
-            relativePlayerRect.top < relativeObjRect.bottom - 2 &&
-            relativePlayerRect.bottom > relativeObjRect.top + 2;
+            playerRect.left < objRect.right &&
+            playerRect.right > objRect.left &&
+            playerRect.top < objRect.bottom &&
+            playerRect.bottom > objRect.top;
             
         return collision;
     },
     
     collectObject(index) {
         const obj = gameState.objects[index];
+        gameState.score += obj.value;
+        elements.score.textContent = gameState.score;
         
-        if (obj.value > 0 && obj.value <= 5) {
-            gameState.score += obj.value;
-            elements.score.textContent = gameState.score;
-        }
+        console.log(`Object collected, score: ${gameState.score}`);
         
         this.removeObject(index);
         
+        // Check for level up
         if (gameState.score >= gameState.level * CONFIG.levelUpScore && 
             gameState.level < CONFIG.maxLevel) {
             gameState.level++;
             gameState.objectSpeed += CONFIG.objectSpeedIncrement;
             elements.level.textContent = gameState.level;
             
+            // Update speed for all existing objects
             gameState.objects.forEach(obj => {
                 obj.speed = gameState.objectSpeed;
             });
+            
+            console.log(`Level up: ${gameState.level}, speed: ${gameState.objectSpeed}`);
         }
     },
     
@@ -137,13 +126,15 @@ export const objectManager = {
     },
     
     clearAllObjects() {
+        // Remove all objects from DOM
         const fallingObjects = elements.gameArea.querySelectorAll('.falling-object');
         fallingObjects.forEach(obj => {
-            if (obj.parentNode) {
-                obj.remove();
-            }
+            obj.remove();
         });
         
-        gameState.objects.length = 0;
+        // Clear the objects array
+        gameState.objects = [];
+        
+        console.log("All objects cleared");
     }
 };
