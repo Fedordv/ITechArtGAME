@@ -1,8 +1,5 @@
-import { elements } from './domElements.js';
-import { gameState } from './gameState.js';
-import { CONFIG } from './config.js';
+import { elements, gameState, CONFIG, KEYS } from '../constants.js';
 
-// Player Movement
 export const playerMovement = {
     keys: {
         left: false,
@@ -11,27 +8,23 @@ export const playerMovement = {
     
     init() {
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') this.keys.left = true;
-            if (e.key === 'ArrowRight') this.keys.right = true;
+            if (e.key === KEYS.ARROW_LEFT) this.keys.left = true;
+            if (e.key === KEYS.ARROW_RIGHT) this.keys.right = true;
         });
         
         document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft') this.keys.left = false;
-            if (e.key === 'ArrowRight') this.keys.right = false;
+            if (e.key === KEYS.ARROW_LEFT) this.keys.left = false;
+            if (e.key === KEYS.ARROW_RIGHT) this.keys.right = false;
         });
-        
-        console.log("Player movement initialized");
     },
     
     update() {
         if (!gameState.isPlaying || gameState.isPaused) return;
         
-        // Get current position
         let currentLeft = parseInt(elements.player.style.left) || 0;
         const gameAreaWidth = elements.gameArea.offsetWidth;
         const playerWidth = elements.player.offsetWidth;
         
-        // Move player
         if (this.keys.left) {
             currentLeft = Math.max(0, currentLeft - CONFIG.playerSpeed);
         }

@@ -1,6 +1,4 @@
-import { elements } from './domElements.js';
-import { gameState } from './gameState.js';
-import { CONFIG } from './config.js';
+import { elements, gameState, CONFIG } from '../constants.js';
 import { playerMovement } from './playerMovement.js';
 import { objectManager } from './objectManager.js';
 
@@ -23,8 +21,6 @@ export const gameManager = {
         });
         
         this.centerPlayer();
-        
-        console.log("Game initialized");
     },
     
     centerPlayer() {
@@ -34,7 +30,7 @@ export const gameManager = {
     },
     
     startGame() {
-        console.log("Starting game...");
+        if (gameState.isPlaying) return;
         
         if (gameState.animationId) {
             cancelAnimationFrame(gameState.animationId);
@@ -47,6 +43,7 @@ export const gameManager = {
         gameState.level = 1;
         gameState.objectSpeed = CONFIG.initialObjectSpeed;
         gameState.lastSpawnTime = 0;
+        gameState.lastFrameTime = 0;
         
         elements.score.textContent = '0';
         elements.level.textContent = '1';
@@ -68,22 +65,20 @@ export const gameManager = {
         
         if (!gameState.isPaused) {
             this.gameLoop();
-        } else {
-            if (gameState.animationId) {
-                cancelAnimationFrame(gameState.animationId);
-            }
+        } else if (gameState.animationId) {
+            cancelAnimationFrame(gameState.animationId);
+            gameState.animationId = null;
         }
     },
     
     endGame() {
-        console.log("Game over!");
         gameState.isPlaying = false;
         if (gameState.animationId) {
             cancelAnimationFrame(gameState.animationId);
             gameState.animationId = null;
         }
         
-        if (gameState.score > gameState.highScore) {
+        if (gameState.score > gameState.highScore && gameState.score < 1000000) { // Reasonable upper limit
             gameState.highScore = gameState.score;
             localStorage.setItem('fallingObjectsHighScore', gameState.highScore.toString());
             elements.highScore.textContent = gameState.highScore;
@@ -97,21 +92,24 @@ export const gameManager = {
         this.startGame();
     },
     
-    gameLoop(timestamp) {
+    gameLoop(currentTime) {
         if (!gameState.isPlaying || gameState.isPaused) return;
         
+        const deltaTime = gameState.lastFrameTime ? currentTime - gameState.lastFrameTime : 16; // ~60fps
+        gameState.lastFrameTime = currentTime;
+        
         if (!gameState.lastSpawnTime) {
-            gameState.lastSpawnTime = timestamp;
+            gameState.lastSpawnTime = currentTime;
         }
         
         playerMovement.update();
         
-        const shouldEndGame = objectManager.updateObjects();
+        const shouldEndGame = objectManager.updateObjects(deltaTime);
         
-        
-        if (timestamp - gameState.lastSpawnTime > CONFIG.spawnInterval) {
+        if (currentTime - gameState.lastSpawnTime > CONFIG.spawnInterval && 
+            gameState.objects.length < CONFIG.maxObjectsOnScreen) {
             objectManager.spawnObject();
-            gameState.lastSpawnTime = timestamp;
+            gameState.lastSpawnTime = currentTime;
         }
         
         if (shouldEndGame) {
