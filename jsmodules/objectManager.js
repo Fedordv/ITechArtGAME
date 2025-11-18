@@ -1,11 +1,9 @@
 import { elements, gameState, CONFIG } from '../constants.js';
 
-// Object Management
 export const objectManager = {
     colors: ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'],
     
     spawnObject() {
-        // Limit maximum objects on screen
         if (gameState.objects.length >= CONFIG.maxObjectsOnScreen) {
             return;
         }
@@ -55,17 +53,14 @@ export const objectManager = {
         for (let i = gameState.objects.length - 1; i >= 0; i--) {
             const obj = gameState.objects[i];
             
-            // Update object position
             obj.top += obj.speed;
             obj.element.style.top = `${obj.top}px`;
             
-            // Check collision
             if (this.checkCollision(obj)) {
                 this.collectObject(i);
                 continue;
             }
             
-            // Check if object is out of bounds
             if (obj.top > elements.gameArea.offsetHeight) {
                 console.log("Object missed - game over");
                 this.removeObject(i);
@@ -81,7 +76,6 @@ export const objectManager = {
         const playerRect = elements.player.getBoundingClientRect();
         const objRect = obj.element.getBoundingClientRect();
         
-        // Simple and reliable collision detection
         const collision = 
             playerRect.left < objRect.right &&
             playerRect.right > objRect.left &&
@@ -100,14 +94,12 @@ export const objectManager = {
         
         this.removeObject(index);
         
-        // Check for level up
         if (gameState.score >= gameState.level * CONFIG.levelUpScore && 
             gameState.level < CONFIG.maxLevel) {
             gameState.level++;
             gameState.objectSpeed += CONFIG.objectSpeedIncrement;
             elements.level.textContent = gameState.level;
             
-            // Update speed for all existing objects
             gameState.objects.forEach(obj => {
                 obj.speed = gameState.objectSpeed;
             });
@@ -126,13 +118,11 @@ export const objectManager = {
     },
     
     clearAllObjects() {
-        // Remove all objects from DOM
         const fallingObjects = elements.gameArea.querySelectorAll('.falling-object');
         fallingObjects.forEach(obj => {
             obj.remove();
         });
         
-        // Clear the objects array
         gameState.objects = [];
         
         console.log("All objects cleared");

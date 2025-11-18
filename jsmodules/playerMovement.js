@@ -1,6 +1,5 @@
 import { elements, gameState, CONFIG, KEYS } from '../constants.js';
 
-// Player Movement
 export const playerMovement = {
     keys: {
         left: false,
@@ -22,12 +21,10 @@ export const playerMovement = {
     update() {
         if (!gameState.isPlaying || gameState.isPaused) return;
         
-        // Get current position
         let currentLeft = parseInt(elements.player.style.left) || 0;
         const gameAreaWidth = elements.gameArea.offsetWidth;
         const playerWidth = elements.player.offsetWidth;
         
-        // Move player
         if (this.keys.left) {
             currentLeft = Math.max(0, currentLeft - CONFIG.playerSpeed);
         }
